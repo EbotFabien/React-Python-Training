@@ -22,6 +22,13 @@ def create_app():
     
     CORS(app,resources=r'/api/*')
 
+    from api import api as api_blueprint
+    from api.v1.fake import fake as fake_blueprint
+    from app import models
+
+    app.register_blueprint(api_blueprint,url_prefix='/api')
+    app.register_blueprint(fake_blueprint)
+
     
 
     return app
