@@ -51,19 +51,19 @@ uploader.add_argument('file',location='files',type=FileStorage,required=False,he
 uploader.add_argument('name',location='form',type=str,required=False,help="Name cannot be blank")
 
 
-user_space=user_doc.Namespace('/api/user',\
+user_space=user_doc.namespace('/api/user',\
                               description="All routes under this section of the documentation are the open routes bot can perform\
                         CRUD action on the application",\
                             path='/v1/')
 
-user_data = user_space('user_data',{
+user_data = user_space.model('user_data',{
     "id":fields.Integer(required=False,default="",description="Identity"),
     "username":fields.String(required=False,default="",description="Username"),
     "email":fields.String(required=False,default="",description="Email"),
     "avatar_url":fields.String(required=False,default="",description="avatar"),
     "about_me":fields.String(required=False,default="",description="about me"),
-    "last_seen":fields.String(required=False,default="",description="last seen"),
-    "fist_seen":fields.String(required=False,default="",description="last seen"),
+    "last_seen":fields.DateTime(required=False,default="",description="last seen"),
+    "first_seen":fields.DateTime(required=False,default="",description="last seen"),
 })
 
 @user_space.doc(
@@ -88,11 +88,10 @@ user_data = user_space('user_data',{
 @user_space.route('/users')
 class all(Resource):
     #@token_required
-    @user_space.expect(user_data)
     def get(self):
         if request.args:
-            page = request.args.get('page', None)
-            per_page = request.args.get('per_page', None)
+            page = int(request.args.get('page', None))
+            per_page = int(request.args.get('per_page', None))
 
         
         #token=request.headers['Authorization']

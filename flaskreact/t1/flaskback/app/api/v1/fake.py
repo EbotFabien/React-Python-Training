@@ -39,6 +39,6 @@ def posts(num):
         user = random.choice(users)
         post = Post(text=faker.paragraph(),author=user,
                  timestamp=faker.date_time_this_year())
-        db.session.add()
+        db.session.add(post)
     db.session.commit()
     print(num,'posts added. ')

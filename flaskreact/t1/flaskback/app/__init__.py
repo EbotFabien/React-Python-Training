@@ -1,13 +1,13 @@
 from flask import Flask,make_response
 import os
-from flask_sqlalchemy import SQLALchemy
+from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from config import Config
 from flask_cors import CORS
 
 
 
-db=SQLALchemy()
+db=SQLAlchemy()
 
 def create_app():
     app=Flask(__name__)
@@ -22,8 +22,8 @@ def create_app():
     
     CORS(app,resources=r'/api/*')
 
-    from api import api as api_blueprint
-    from api.v1.fake import fake as fake_blueprint
+    from app.api import api as api_blueprint
+    from app.api.v1.fake import fake as fake_blueprint
     from app import models
 
     app.register_blueprint(api_blueprint,url_prefix='/api')

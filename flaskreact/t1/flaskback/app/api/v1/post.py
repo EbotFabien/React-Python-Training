@@ -52,16 +52,26 @@ uploader.add_argument('name',location='form',type=str,required=False,help="Name 
 
 
 
-post_space= post1.Namespace('/api/post',\
+post_space= post1.namespace('/api/post',\
                        description="All routes under this section of the documentation are the open routes bot can perform\
                         CRUD action on the application",\
                             path='/v1/')
 
 
+user_data = post_space.model('user_data',{
+    "id":fields.Integer(required=False,default="",description="Identity"),
+    "username":fields.String(required=False,default="",description="Username"),
+    "email":fields.String(required=False,default="",description="Email"),
+    "avatar_url":fields.String(required=False,default="",description="avatar"),
+    "about_me":fields.String(required=False,default="",description="about me"),
+    "last_seen":fields.DateTime(required=False,default="",description="last seen"),
+    "first_seen":fields.DateTime(required=False,default="",description="last seen"),
+})
 
-post_data = post_space('post_data',{
-    "content":fields.String(required=False,default="",description="Content"),
-    "title":fields.String(required=False,default="",description="Title")
+post_data = post_space.model('post_data',{
+    "text":fields.String(required=False,default="",description="Content"),
+    "timestamp":fields.DateTime(required=False,default="",description="Time"),
+    "author":fields.Nested(user_data),
 })
 
 
@@ -117,17 +127,19 @@ class create(Resource):
 @post_space.route('/posts')
 class all(Resource):
     #@token_required
-    @post_space.expect(post_data)
     def get(self):
         if request.args:
-            page = request.args.get('page', None)
-            per_page = request.args.get('per_page', None)
+            page = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 6))
+        else:
+            page=1
+            per_page=6
 
         
         #token=request.headers['Authorization']
         #data =jwt.decode(token,app.config.get('SECRET_KEY'),algorithms='HS256')
         posts_=Post.query.paginate(page=page,per_page=per_page)
-
+        print(posts_.items)
         return{
             "results":marshal(posts_.items,post_data)
         }

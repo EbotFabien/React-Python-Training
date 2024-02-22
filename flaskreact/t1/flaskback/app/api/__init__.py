@@ -1,7 +1,7 @@
 from flask import Blueprint, url_for
-from flask_restplus import Api
+from flask_restx import Api
 from flask_cors import CORS
-from v1 import post_space,user_space
+from .v1 import post_space,user_space
 
 authorizations = {
     'KEY': {

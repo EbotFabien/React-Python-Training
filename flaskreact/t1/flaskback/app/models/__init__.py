@@ -23,11 +23,11 @@ class Token(db.Model):
     id= db.Column(db.Integer,primary_key=True)
     access_token=db.Column(db.String(64),index=True)
     refresh_token = db.Column(db.String(64),index=True)
-    refresh_expiration = db.Column(db.datetime())
+    refresh_expiration = db.Column(db.DateTime())
     user_id = db.Column(db.Integer,db.ForeignKey('users.id'))
-    user=db.relationship(
-        'User',backref='tokens',lazy='dynamic'
-    )
+    #user_tokens=db.relationship(
+    #    'User',backref='tokens'
+    #)
 
     @property
     def access_token_jwt(self):
@@ -75,10 +75,10 @@ class User(db.Model):
     uuid = db.Column(db.String,unique=True)
     username =db.Column(db.String,unique=True)
     email = db.Column(db.String,nullable=False)
-    password_hash = db.Column(db.String,nullable=False)
+    password_hash = db.Column(db.String,nullable=True)
     about_me = db.Column(db.String)
-    first_seen = db.Column(default=datetime.utcnow)
-    last_seen = db.Column(default=datetime.utcnow)
+    first_seen = db.Column(db.DateTime(),default=datetime.utcnow,nullable=False)
+    last_seen = db.Column(db.DateTime(),default=datetime.utcnow,nullable=False)
 
     tokens=db.relationship(
         'Token',
@@ -98,13 +98,7 @@ class User(db.Model):
         lazy='dynamic'
     )
 
-    followers = db.relationship(
-        'User',
-        secondary=followers,
-        primaryjoin=(followers.c.followed_id == id),
-        secondaryjoin=(followers.c.follower_id == id),
-        backref=db.backref('following',lazy='dynamic')
-    )
+    
 
     def followed_posts_select(self):
         followed=Post.query.join(
@@ -114,11 +108,12 @@ class User(db.Model):
         return followed.union(own).order_by(Post.timestamp.desc)
 
 
-    def __init__(self,username,email,password_hash):
+    def __init__(self,username,email,about_me):
         self.username =username
         self.email=email
-        self.uuid=uuid.uuid4.hex()
-        self.password_hash=generate_password_hash(password_hash)
+        self.uuid=str(uuid.uuid4())
+        #self.password_hash=generate_password_hash(password_hash)
+        self.about_me=about_me
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -211,17 +206,17 @@ class Post(db.Model):
     id=db.Column(db.Integer,primary_key=True)
     user_id=db.Column(db.Integer,db.ForeignKey('users.id'))
     text=db.Column(db.String)
-    timestamp = db.Column(db.datetime,default=datetime.utcnow)
-    author = db.relationship('User',backref='posts',lazy='dynamic')
+    timestamp = db.Column(db.DateTime,default=datetime.utcnow)
+    #author = db.relationship('User',backref='posts',lazy='dynamic')
 
 
-    def __init__(self,text,user):
-        self.user_id=user
-        self.text=text
+    #def __init__(self,text,user):
+    #    self.user_id=user
+    #    self.text=text
         
     
     def __repr__(self):
-        return '<Post %r>' % self.title
+        return '<Post %r>' % self.id
     
     @property
     def url(self):
