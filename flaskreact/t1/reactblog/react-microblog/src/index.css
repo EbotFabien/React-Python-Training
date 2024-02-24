@@ -71,3 +71,14 @@ code {
 .Post a:visited{
   color: #14c;
 }
+
+.More {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  text-align: right;
+}
+
+.InputField{
+  margin-top: 15px;
+  margin-bottom: 15px;
+}

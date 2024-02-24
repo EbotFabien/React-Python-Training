@@ -37,9 +37,9 @@ class Token(db.Model):
     
     def generate(self):
         self.access_token = secrets.token_urlsafe()
-        self.access_expiration = datetime.utcnow + \
+        self.access_expiration = datetime.utcnow() + \
             timedelta(minutes=current_app.config['ACCESS_TOKEN_MINUTES'])
-        self.refresh_token =secrets.token_urlsafe
+        self.refresh_token =secrets.token_urlsafe()
         self.refresh_expiration = datetime.utcnow() + \
             timedelta(days=current_app.config['REFRESH_TOKEN_DAYS'])
         
@@ -86,7 +86,7 @@ class User(db.Model):
     )
     posts=db.relationship(
         'Post',
-        backref='author'
+        backref='author', lazy='dynamic'
     )
 
     following = db.relationship(
@@ -108,11 +108,11 @@ class User(db.Model):
         return followed.union(own).order_by(Post.timestamp.desc)
 
 
-    def __init__(self,username,email,about_me):
+    def __init__(self,username,email,about_me,password_hash):
         self.username =username
         self.email=email
         self.uuid=str(uuid.uuid4())
-        #self.password_hash=generate_password_hash(password_hash)
+        self.password_hash=generate_password_hash(password_hash)
         self.about_me=about_me
 
     def __repr__(self):

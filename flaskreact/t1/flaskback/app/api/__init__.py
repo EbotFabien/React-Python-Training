@@ -1,7 +1,7 @@
 from flask import Blueprint, url_for
 from flask_restx import Api
 from flask_cors import CORS
-from .v1 import post_space,user_space
+from .v1 import post_space,user_space,token_space
 
 authorizations = {
     'KEY': {
@@ -21,3 +21,4 @@ CORS(api,resources={r"/api/*":{"origins":"*"}})
 
 apisec.add_namespace(post_space)
 apisec.add_namespace(user_space)
+apisec.add_namespace(token_space)

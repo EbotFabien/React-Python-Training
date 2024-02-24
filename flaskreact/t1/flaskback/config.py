@@ -26,5 +26,5 @@ class Config:
     RESET_TOKEN_MINUTES = int(os.environ.get('RESET_TOKEN_MINUTES') or '15')
     PASSWORD_RESET_URL = os.environ.get('PASSWORD_RESET_URL') or \
         'http://localhost:3000/reset'
-    USE_CORS = as_bool(os.environ.get('USE_CORS') or 'yes')
-    CORS_SUPPORTS_CREDENTIALS = True
+    USE_CORS = False #as_bool(os.environ.get('USE_CORS') or 'yes')
+    CORS_SUPPORTS_CREDENTIALS = False

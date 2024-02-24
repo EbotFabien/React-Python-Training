@@ -64,13 +64,13 @@ user_data = post_space.model('user_data',{
     "email":fields.String(required=False,default="",description="Email"),
     "avatar_url":fields.String(required=False,default="",description="avatar"),
     "about_me":fields.String(required=False,default="",description="about me"),
-    "last_seen":fields.DateTime(required=False,default="",description="last seen"),
-    "first_seen":fields.DateTime(required=False,default="",description="last seen"),
+    "last_seen":fields.String(required=False,default="",description="last seen"),
+    "first_seen":fields.String(required=False,default="",description="last seen"),
 })
 
 post_data = post_space.model('post_data',{
     "text":fields.String(required=False,default="",description="Content"),
-    "timestamp":fields.DateTime(required=False,default="",description="Time"),
+    "timestamp":fields.String(required=False,default="",description="Time"),
     "author":fields.Nested(user_data),
 })
 
@@ -141,6 +141,55 @@ class all(Resource):
         posts_=Post.query.paginate(page=page,per_page=per_page)
         print(posts_.items)
         return{
-            "results":marshal(posts_.items,post_data)
+            "results":marshal(posts_.items,post_data),
+            "pagination": {
+                "page":page,
+                "limit": per_page,
+                "total": posts_.total
+            }
         }
 
+
+@post_space.doc(
+    security='KEY',
+    params={
+            'page': 'Value to start from ',
+            'per_page':'Number of pages'
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
+
+@post_space.route('/users/<int:id>/posts')
+class users_all_posts(Resource):
+    #@token_required
+    def get(self,id):
+        if request.args:
+            page = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 6))
+        else:
+            page=1
+            per_page=6
+
+        
+        #token=request.headers['Authorization']
+        #data =jwt.decode(token,app.config.get('SECRET_KEY'),algorithms='HS256')
+        posts_=User.query.filter_by(id=id).first().posts.paginate(page=page,per_page=per_page)
+        print(posts_.items)
+        return{
+            "results":marshal(posts_.items,post_data),
+            "pagination": {
+                "page":page,
+                "limit": per_page,
+                "total": posts_.total
+            }
+        }

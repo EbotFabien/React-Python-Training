@@ -9,6 +9,7 @@ from flask import current_app as app
 
 from app.models import Post,User
 from werkzeug.datastructures import FileStorage
+from app import db
 
 authorizations ={
     'KEY':{
@@ -62,8 +63,14 @@ user_data = user_space.model('user_data',{
     "email":fields.String(required=False,default="",description="Email"),
     "avatar_url":fields.String(required=False,default="",description="avatar"),
     "about_me":fields.String(required=False,default="",description="about me"),
-    "last_seen":fields.DateTime(required=False,default="",description="last seen"),
-    "first_seen":fields.DateTime(required=False,default="",description="last seen"),
+    "last_seen":fields.String(required=False,default="",description="last seen"),
+    "first_seen":fields.String(required=False,default="",description="last seen"),
+})
+
+user_create_data = user_space.model('user_create_data',{
+    "username":fields.String(required=False,default="",description="username"),
+    "email":fields.String(required=False,default="",description="email"),
+    "password":fields.String(required=False,default="",description="password"),
 })
 
 @user_space.doc(
@@ -101,3 +108,71 @@ class all(Resource):
         return{
             "results":marshal(users_.items,user_data)
         }
+
+@user_space.doc(
+    security='KEY',
+    params={
+            
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
+
+@user_space.route('/user/create/')
+class create(Resource):
+    @user_space.expect(user_create_data)
+    def post(self):
+        data=request.get_json()
+        user= User(username=data["username"], email=data["email"],
+                    about_me='',password_hash=data["password"])
+        db.session.add(user)
+        db.session.commit()
+        return{
+            "results":marshal(user,user_data),
+            "res":"User created succesfully"
+        },200
+
+
+@user_space.doc(
+    security='KEY',
+    params={
+            
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
+
+@user_space.route('/users/<username>')
+class get_by_username(Resource):
+    #@token_required
+    def get(self,username):
+        if request.args:
+            page = int(request.args.get('page', None))
+            per_page = int(request.args.get('per_page', None))
+
+        
+        #token=request.headers['Authorization']
+        #data =jwt.decode(token,app.config.get('SECRET_KEY'),algorithms='HS256')
+        users_=User.query.filter_by(username=username).first()
+
+        return{
+            "results":marshal(users_,user_data)
+        },200
