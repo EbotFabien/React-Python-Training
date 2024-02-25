@@ -7,7 +7,7 @@ from functools import wraps
 from flask import request,Blueprint
 from flask import current_app as app
 
-from app.models import Post,User
+from app.models import Post,User,Token
 from werkzeug.datastructures import FileStorage
 
 
@@ -24,9 +24,13 @@ def token_required(f):
     def decorated(*args, **kwargs):
         token =None
         if 'Authorization' in request.headers:
-            token = request.headers['Authorization']
+            token = request.headers['Authorization'].split()[1]
+            
             try:
-                data=jwt.decode(token,app.config.get('SECRET_KEY'))
+                data=Token.from_jwt(token)
+                
+                if not data:
+                    return {'message':'Token is invalid.'},401
             except:
                 return {'message':'Token is invalid.'},403
             
@@ -126,7 +130,7 @@ class create(Resource):
 
 @post_space.route('/posts')
 class all(Resource):
-    #@token_required
+    @token_required
     def get(self):
         if request.args:
             page = int(request.args.get('page', 1))
@@ -171,7 +175,7 @@ class all(Resource):
 
 @post_space.route('/users/<int:id>/posts')
 class users_all_posts(Resource):
-    #@token_required
+    @token_required
     def get(self,id):
         if request.args:
             page = int(request.args.get('page', 1))

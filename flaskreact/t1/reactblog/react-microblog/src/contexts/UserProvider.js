@@ -11,7 +11,7 @@ export default function UserProvider({children}){
         (async () =>{
             if(api.isAuthenticated()){
                 const response = await api.get('/me');
-                setUser(response.ok ? response.body:null)
+                setUser(response.ok ? response.body.results:null)
             }
             else{
                 setUser(null);
@@ -23,7 +23,7 @@ export default function UserProvider({children}){
         const result = await api.login(username,password);
         if (result === 'ok'){
             const response = await api.get('/me');
-            setUser(response.ok ? response.body : null);
+            setUser(response.ok ? response.body.results : null);
         }
         return result;
     },[api]);

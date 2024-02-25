@@ -29,11 +29,11 @@ def token_required(f):
             try:
                 data=jwt.decode(token,app.config.get('SECRET_KEY'))
             except:
-                return {'message':'Token is invalid.'},403
+                return {'message':'Token is invalid.'},401
             
 
         if not token:
-            return {'message':'Token is missing or nor found'}
+            return {'message':'Token is missing or nor found'},403
         
         if data:
             pass
@@ -122,10 +122,43 @@ class new(Resource):
         if check and check.verify_password(password):
             token = check.generate_auth_token()
             db.session.add(token)
-            #Token.clean()
+            Token.clean()
             db.session.commit()
             return token_response(token)
 
                 
+@token_space.doc(
+    security='KEY',
+    params={
+            
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
 
+@token_space.route('/tokens')
+class refresh(Resource):
+    def put(self):
+        
+        access_token_jwt = args['access_token']
+        refresh_token = args.get('refresh_token',request.cookies.get('refresh_token'))
+        if not access_token_jwt or not refresh_token:
+            abort(401)
+        token = User.verify_refresh_token(refresh_token, access_token_jwt)
+        if not token:
+            abort(401)
+        token.expire()
+        new_token = token.user.generate_auth_token()
+        db.session.add_all([token, new_token])
+        db.session.commit()
+        return token_response(new_token)
         

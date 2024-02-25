@@ -24,6 +24,7 @@ class Token(db.Model):
     access_token=db.Column(db.String(64),index=True)
     refresh_token = db.Column(db.String(64),index=True)
     refresh_expiration = db.Column(db.DateTime())
+    access_expiration = db.Column(db.DateTime())
     user_id = db.Column(db.Integer,db.ForeignKey('users.id'))
     #user_tokens=db.relationship(
     #    'User',backref='tokens'
@@ -53,8 +54,8 @@ class Token(db.Model):
     def clean():
         """Remove any tokens that have been expired for more than a day."""
         yesterday = datetime.utcnow() - timedelta(days=1)
-        Token.delete().where(
-            Token.refresh_expiration < yesterday)
+        Token.query.where(
+            Token.refresh_expiration < yesterday).delete()
         db.session.commit()
 
     @staticmethod
@@ -64,7 +65,7 @@ class Token(db.Model):
             access_token = jwt.decode(access_token_jwt,
                                       current_app.config['SECRET_KEY'],
                                       algorithms=['HS256'])['token']
-            return Token.filter_by(access_token=access_token).first()
+            return Token.query.filter_by(access_token=access_token).first()
         except jwt.PyJWTError:
             pass
 
@@ -139,7 +140,7 @@ class User(db.Model):
             return check_password_hash(self.password_hash,password)
     
     def ping(self):
-        self.last_seen = datetime.utcnow
+        self.last_seen = datetime.utcnow()
     
     def follow(self,user):
         if not self.is_following(user):

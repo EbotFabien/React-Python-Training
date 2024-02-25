@@ -7,7 +7,7 @@ from functools import wraps
 from flask import request,Blueprint
 from flask import current_app as app
 
-from app.models import Post,User
+from app.models import Post,User,Token
 from werkzeug.datastructures import FileStorage
 from app import db
 
@@ -24,9 +24,13 @@ def token_required(f):
     def decorated(*args, **kwargs):
         token =None
         if 'Authorization' in request.headers:
-            token = request.headers['Authorization']
+            token = request.headers['Authorization'].split()[1]
+            
             try:
-                data=jwt.decode(token,app.config.get('SECRET_KEY'))
+                data=Token.from_jwt(token)
+                
+                if not data:
+                    return {'message':'Token is invalid.'},401
             except:
                 return {'message':'Token is invalid.'},403
             
@@ -94,7 +98,7 @@ user_create_data = user_space.model('user_create_data',{
 
 @user_space.route('/users')
 class all(Resource):
-    #@token_required
+    @token_required
     def get(self):
         if request.args:
             page = int(request.args.get('page', None))
@@ -107,6 +111,40 @@ class all(Resource):
 
         return{
             "results":marshal(users_.items,user_data)
+        }
+
+
+@user_space.doc(
+    security='KEY',
+    params={
+            'page': 'Value to start from ',
+            'per_page':'Number of pages'
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
+
+@user_space.route('/me')
+class single(Resource):
+    @token_required
+    def get(self):
+        
+        token=request.headers['Authorization'].split()[1]
+        
+        user=User.verify_access_token(token)
+        print(user,user_data)
+
+        return{
+            "results":marshal(user,user_data)
         }
 
 @user_space.doc(
@@ -162,15 +200,14 @@ class create(Resource):
 
 @user_space.route('/users/<username>')
 class get_by_username(Resource):
-    #@token_required
+    @token_required
     def get(self,username):
         if request.args:
             page = int(request.args.get('page', None))
             per_page = int(request.args.get('per_page', None))
 
         
-        #token=request.headers['Authorization']
-        #data =jwt.decode(token,app.config.get('SECRET_KEY'),algorithms='HS256')
+        
         users_=User.query.filter_by(username=username).first()
 
         return{
