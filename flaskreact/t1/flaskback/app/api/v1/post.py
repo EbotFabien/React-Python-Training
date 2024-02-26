@@ -9,6 +9,7 @@ from flask import current_app as app
 
 from app.models import Post,User,Token
 from werkzeug.datastructures import FileStorage
+from app import db
 
 
 authorizations ={
@@ -27,12 +28,12 @@ def token_required(f):
             token = request.headers['Authorization'].split()[1]
             
             try:
-                data=Token.from_jwt(token)
+                data=User.verify_access_token(token)
                 
                 if not data:
                     return {'message':'Token is invalid.'},401
             except:
-                return {'message':'Token is invalid.'},403
+                return {'message':'Token is invalid.'},401
             
 
         if not token:
@@ -143,7 +144,6 @@ class all(Resource):
         #token=request.headers['Authorization']
         #data =jwt.decode(token,app.config.get('SECRET_KEY'),algorithms='HS256')
         posts_=Post.query.paginate(page=page,per_page=per_page)
-        print(posts_.items)
         return{
             "results":marshal(posts_.items,post_data),
             "pagination": {
@@ -184,11 +184,8 @@ class users_all_posts(Resource):
             page=1
             per_page=6
 
-        
-        #token=request.headers['Authorization']
-        #data =jwt.decode(token,app.config.get('SECRET_KEY'),algorithms='HS256')
         posts_=User.query.filter_by(id=id).first().posts.paginate(page=page,per_page=per_page)
-        print(posts_.items)
+        
         return{
             "results":marshal(posts_.items,post_data),
             "pagination": {
@@ -197,3 +194,84 @@ class users_all_posts(Resource):
                 "total": posts_.total
             }
         }
+
+
+@post_space.doc(
+    security='KEY',
+    params={
+            'page': 'Value to start from ',
+            'per_page':'Number of pages'
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
+
+@post_space.route('/feed')
+class feed(Resource):
+    @token_required
+    def get(self):
+        if request.args:
+            page = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 6))
+        else:
+            page=1
+            per_page=6
+
+        token=request.headers['Authorization'].split()[1]
+        
+        user=User.verify_access_token(token)
+        
+        
+        posts_=user.followed_posts_select()
+        posts_=posts_.paginate(page=page,per_page=per_page)
+        return{
+            "results":marshal(posts_.items,post_data),
+            "pagination": {
+                "page":page,
+                "limit": per_page,
+                "total": posts_.total
+            }
+        }
+
+@post_space.doc(
+    security='KEY',
+    params={
+            
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
+
+@post_space.route('/posts')
+class create(Resource):
+    def post(self):
+        data=request.get_json()
+        token=request.headers['Authorization'].split()[1]
+        
+        user=User.verify_access_token(token)
+        post= Post(author=user,**data)
+        db.session.add(post)
+        db.session.commit()
+        
+        return{
+            "results":marshal(post,post_data),
+            "res":"User created succesfully"
+        },200

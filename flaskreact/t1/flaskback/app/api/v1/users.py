@@ -27,12 +27,12 @@ def token_required(f):
             token = request.headers['Authorization'].split()[1]
             
             try:
-                data=Token.from_jwt(token)
+                data=User.verify_access_token(token)
                 
                 if not data:
                     return {'message':'Token is invalid.'},401
             except:
-                return {'message':'Token is invalid.'},403
+                return {'message':'Token is invalid.'},401
             
 
         if not token:
@@ -141,11 +141,54 @@ class single(Resource):
         token=request.headers['Authorization'].split()[1]
         
         user=User.verify_access_token(token)
-        print(user,user_data)
+        
 
         return{
             "results":marshal(user,user_data)
         }
+
+
+@user_space.doc(
+    security='KEY',
+    params={
+            'page': 'Value to start from ',
+            'per_page':'Number of pages'
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
+
+@user_space.route('/me')
+class edit_me(Resource):
+    @token_required
+    def put(self):
+        
+        data=request.get_json()
+        token=request.headers['Authorization'].split()[1]
+        
+        user=User.verify_access_token(token)
+        if 'password' in data and ('old_password' not in data or
+                               not user.verify_password(data['old_password'])):
+            return {},400
+
+        user.update(data)
+        db.session.commit()
+        
+
+        return{
+            "results":marshal(user,user_data)
+        }
+
+
 
 @user_space.doc(
     security='KEY',
@@ -213,3 +256,116 @@ class get_by_username(Resource):
         return{
             "results":marshal(users_,user_data)
         },200
+
+
+@user_space.doc(
+    security='KEY',
+    params={
+            'page': 'Value to start from ',
+            'per_page':'Number of pages'
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
+
+@user_space.route('/me/following/<int:id>')
+class is_followed(Resource):
+    @token_required
+    def get(self,id):
+        
+        token=request.headers['Authorization'].split()[1]
+        
+        user=User.verify_access_token(token)
+        followed_user = User.query.filter_by(id=id).first() 
+
+        if not user.is_following(followed_user):
+            return {},404
+        return {},204
+        
+
+        
+
+@user_space.doc(
+    security='KEY',
+    params={
+            'page': 'Value to start from ',
+            'per_page':'Number of pages'
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
+
+@user_space.route('/me/following/<int:id>')
+class follow_user(Resource):
+    @token_required
+    def post(self,id):
+        
+        token=request.headers['Authorization'].split()[1]
+        
+        user=User.verify_access_token(token)
+        followed_user = User.query.filter_by(id=id).first() 
+
+        if user.is_following(followed_user):
+            return {},404
+        user.follow(followed_user)
+        db.session.commit()
+        return {},204
+
+
+@user_space.doc(
+    security='KEY',
+    params={
+            'page': 'Value to start from ',
+            'per_page':'Number of pages'
+    },
+    responses={
+         200: 'ok',
+        201: 'created',
+        204: 'No Content',
+        301: 'Resource was moved',
+        304: 'Resource was not Modified',
+        400: 'Bad Request to server',
+        401: 'Unauthorized request from client to server',
+        403: 'Forbidden request from client to server',
+        404: 'Resource Not found',
+        500: 'internal server error, please contact admin and report issue'
+    })
+
+@user_space.route('/me/following/<int:id>')
+class unfollow_user(Resource):
+    @token_required
+    def delete(self,id):
+        
+        token=request.headers['Authorization'].split()[1]
+        
+        user=User.verify_access_token(token)
+        unfollowed_user = User.query.filter_by(id=id).first() 
+
+        if not user.is_following(unfollowed_user):
+            return {},404
+        user.unfollow(unfollowed_user)
+        db.session.commit()
+        return {},204
+        
+
+        
+
+        

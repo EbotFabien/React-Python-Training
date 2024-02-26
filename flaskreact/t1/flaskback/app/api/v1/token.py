@@ -112,6 +112,7 @@ def token_response(token):
 @token_space.route('/tokens')
 class new(Resource):
     def post(self):
+        print(23)
         data_=base64.b64decode(request.headers['Authorization'].split()[1])
         data=data_.decode('utf-8').split(':')
         username=data[0]
@@ -149,8 +150,10 @@ class new(Resource):
 class refresh(Resource):
     def put(self):
         
+        args=request.get_json()
         access_token_jwt = args['access_token']
         refresh_token = args.get('refresh_token',request.cookies.get('refresh_token'))
+       
         if not access_token_jwt or not refresh_token:
             abort(401)
         token = User.verify_refresh_token(refresh_token, access_token_jwt)

@@ -17,7 +17,7 @@ apisec = Api(app=api, doc='/docs', version='1.9.0', title='Test Blog.',
              description='This documentation contains all routes to access the Test Blog. \npip install googletransSome routes require authorization and can only be gotten \
     from the odaaay company', license='../LICENSE', license_url='www.blog.com', contact='leslie.etubo@gmail.com', authorizations=authorizations)
 
-CORS(api,resources={r"/api/*":{"origins":"*"}})
+#CORS(api,resources={r"/api/*":{"origins":"*"}})
 
 apisec.add_namespace(post_space)
 apisec.add_namespace(user_space)

@@ -17,6 +17,11 @@ followers = db.Table(
     db.Column('followed_id',db.Integer,db.ForeignKey('users.id'))
 )
 
+class Updateable:
+    def update(self, data):
+        for attr, value in data.items():
+            setattr(self, attr, value)
+
 class Token(db.Model):
     __tablename__ = 'tokens'
 
@@ -69,7 +74,7 @@ class Token(db.Model):
         except jwt.PyJWTError:
             pass
 
-class User(db.Model):
+class User(Updateable,db.Model):
     __tablename__='users'
 
     id=db.Column(db.Integer,primary_key=True)
@@ -105,8 +110,10 @@ class User(db.Model):
         followed=Post.query.join(
             followers,(followers.c.followed_id == Post.user_id)).filter(
                 followers.c.follower_id == self.id)
+        
         own = Post.query.filter_by(user_id=self.id)
-        return followed.union(own).order_by(Post.timestamp.desc)
+        
+        return followed.union(own).order_by(Post.timestamp.desc())
 
 
     def __init__(self,username,email,about_me,password_hash):
@@ -171,7 +178,7 @@ class User(db.Model):
     def verify_refresh_token(refresh_token,access_token_jwt):
         token=Token.from_jwt(access_token_jwt)
         if token and token.refresh_token == refresh_token:
-            if token.refresh.expiration > datetime.utcnow():
+            if token.refresh_expiration > datetime.utcnow():
                 return token
             
             # someone tried to refresh with an expired token

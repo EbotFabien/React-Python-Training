@@ -3,10 +3,10 @@ import Spinner from 'react-bootstrap/Spinner';
 import { useApi } from "../contexts/ApiProvider";
 import Post from './Post';
 import More from './More';
+import Write from './Write';
 
 
-
-export default function Posts({content}){
+export default function Posts({content,write}){
     const [posts,setPosts] = useState();
     const [pagination,setPagination] = useState();
     const api=useApi()
@@ -38,6 +38,10 @@ export default function Posts({content}){
       })();
     },[api,url]);
 
+    const showPost = (newPost) =>{
+        setPosts([newPost,...posts])
+    };
+
     const loadNextPage = async () =>{
         const response = await api.get(url,{
           page:pagination.page + 1
@@ -49,7 +53,8 @@ export default function Posts({content}){
     };
 
     return(
-      <>
+      <>  
+          {write && <Write showPost={showPost} />}
           {posts ===  undefined?
               <Spinner animation="border"/>
           :

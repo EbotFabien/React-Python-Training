@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 
 db=SQLAlchemy()
-
+cors=CORS()
 def create_app():
     app=Flask(__name__)
     app.config.from_object(Config)
@@ -19,8 +19,9 @@ def create_app():
     with app.app_context():
         response = make_response()
         response.headers.add("Access-Control-Allow-Origin","*")
-    
-    CORS(app,resources=r'/api/*')
+    if app.config['USE_CORS']:  # pragma: no branch
+        cors.init_app(app)
+    #CORS(app,resources=r'/api/*')
 
     from app.api import api as api_blueprint
     from app.api.v1.fake import fake as fake_blueprint
